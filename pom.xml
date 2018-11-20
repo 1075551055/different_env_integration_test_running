@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>water.li.solution</groupId>
+    <artifactId>different_env_integration_test_running</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.surefire</groupId>
+            <artifactId>surefire-junit47</artifactId>
+            <version>2.13</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>Env1-Test</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.group>junit.category.Env2</exclude.group>
+                <env.config>Env1</env.config>
+            </properties>
+        </profile>
+        <profile>
+            <id>Env2-Test</id>
+            <properties>
+                <exclude.group>junit.category.Env1</exclude.group>
+                <exclude.group>junit.category.Env1</exclude.group>
+                <env.config>Env2</env.config>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <!--<plugin>-->
+                <!--&lt;!&ndash;unit test plugin&ndash;&gt;-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-surefire-plugin</artifactId>-->
+                <!--<version>2.13</version>-->
+                <!--<dependencies>-->
+                    <!--<dependency>-->
+                        <!--<groupId>org.apache.maven.surefire</groupId>-->
+                        <!--<artifactId>surefire-junit47</artifactId>-->
+                        <!--<version>2.13</version>-->
+                    <!--</dependency>-->
+                <!--</dependencies>-->
+                <!--<configuration>-->
+                    <!--&lt;!&ndash;unit test no need, this solution is only for integration test&ndash;&gt;-->
+                    <!--&lt;!&ndash;<groups>junit.category.Env1</groups>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<excludedGroups>${exclude.group}</excludedGroups>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<threadCount>2</threadCount>&ndash;&gt;-->
+                    <!--&lt;!&ndash;<parallel>methods</parallel>&ndash;&gt;-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+
+            <plugin>
+                <!--integration test plugin, include unit test lifecycle, can see maven lifecycle-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.13</version>
+                <dependencies>
+                    <!--need surefire-junit47 dependency, otherwise <excludedGroups> or <groups> setting don't work-->
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junit47</artifactId>
+                        <version>2.13</version>
+                    </dependency>
+                </dependencies>
+
+                <configuration>
+                    <testSourceDirectory>src/it/java</testSourceDirectory>
+                    <testClassesDirectory>${project.build.directory}/it-classes</testClassesDirectory>
+                    <includes>
+                        <include>**/*.java</include>
+                        <!--<include>**/*.groovy</include>-->
+                    </includes>
+
+                    <!--<groups>junit.category.Env1</groups>-->
+                    <excludedGroups>${exclude.group}</excludedGroups>
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <!--maven compiler plugin, it will compile src/test/java folder classes, if no need to
+                 to run unit test in integration test CI tool(jenkins), can remove it-->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-integration-test</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <!--compile src/test/java folder classes to it-classes-->
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <testIncludes>
+                                <!--include all classes under src/test/java folder-->
+                                <testInclude>**/*.java</testInclude>
+                            </testIncludes>
+                            <!--compile src/test/java folder classes to it-classes-->
+                            <outputDirectory>${project.build.directory}/it-classes</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>add-it-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <!--add classes under src/it/java as test classes. phase:generate-test-sources.  pre-integration-test?-->
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/it/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.5</version>
+                <executions>
+                    <execution>
+                        <id>add-it-resources</id>
+                        <!--<phase>generate-test-sources</phase>-->
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <!--copy integration test resources-->
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <!--it will overwrite the file if file name is same, like here, will overwrite env-test.xml-->
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${project.build.directory}/it-classes</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>src/it/resources</directory>
+                                </resource>
+                                <resource>
+                                    <!--<directory>src/it/resources/${env.config}</directory>-->
+                                    <directory>src/it/resources/${env.config}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+        </plugins>
+    </build>
+
+</project>
