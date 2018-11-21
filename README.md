@@ -10,6 +10,6 @@ Just imagine that We have one code base, need to deploy to two or more different
 
   1. Add @Category(groupClass.class) to test method or test class, if the test case is for all environments, no need to add        @Category;
   
-  2. maven command for Env1 & Env2:
-      mvn clean install -PEnv1-Test
-      mvn clean install -PEnv2-Test
+  2. maven command for Env1 & Env2:  
+      mvn clean install -PEnv1-Test  
+      mvn clean install -PEnv2-Test  
