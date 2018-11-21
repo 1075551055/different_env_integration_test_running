@@ -1,6 +1,6 @@
 # different_env_integration_test_running
 
-junit test category &amp; maven config for running different enviroment integration test
+junit test category &amp; maven config for running integration test for one code base in different environments
 
 # Introduction
 
